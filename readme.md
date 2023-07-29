@@ -9,7 +9,7 @@ To use the Lazy Labeler application, follow these steps:
 1. Clone the repository from GitHub:
 
 ```
-git clone https://github.com/exampleuser/lazy-labeler.git
+git clone [https://github.com/exampleuser/lazy-labeler.git](https://github.com/Blueoctopusinc/Lazy-labeler/tree/main)
 cd lazy-labeler
 ```
 
