@@ -83,7 +83,7 @@ This feature is especially useful when the number of classes is large and/or the
 
 3. Once you're in a labeling task, the application will present data samples one by one. For each sample, use the hotkeys (keyboard shortcuts) to select the appropriate label(s) based on the displayed classes:
 
-   - Press the corresponding hotkey (e.g., 1, 2, 3) to select the class label. The for each class key is noted on the button.
+   - Press the corresponding hotkey (e.g., 1, 2, 3) to select the class label. The key for each class key is noted on the button.
    - Press the spacebar to go to the next sample.
    - Click the save button to save any labels created.
    
