@@ -225,7 +225,6 @@ class LabelingProjectWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Setup for labelled samples count label
-        layout.addWidget(QLabel("Number of Labelled Samples"))
         self.labelled_samples_count_label = QLabel()
         layout.addWidget(self.labelled_samples_count_label)
 
@@ -260,7 +259,7 @@ class LabelingProjectWindow(QMainWindow):
         # Setup for 'Save' button
         layout.addWidget(QLabel("Save Button"))
         save_btn = QPushButton('Save')
-        save_btn.clicked.connect(self.save_changes)
+        save_btn.clicked.connect(self.on_save_button_clicked)
         layout.addWidget(save_btn)
 
         # Setup for autosave checkbox

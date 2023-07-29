@@ -1,5 +1,5 @@
 # Lazy Labeler
-
+![img.png](img.png)
 Lazy Labeler is a Python-driven desktop application designed to simplify the task of manually labeling datasets for machine learning projects. It presents an interactive interface, enabling users to label data samples with pre-established classes conveniently and swiftly. Although it was primarily developed as a personal tool and may not be suited for handling an exceptionally large number of labels at the moment (even though it can display them, it negates the quick hotkey labeling feature), it still holds potential usefulness for others. Additionally, it served as a learning opportunity to become more proficient in PyQt6, even though there are superior alternatives available.
 
 To use the Lazy Labeler application, follow these steps:
