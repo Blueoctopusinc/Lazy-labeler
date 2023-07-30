@@ -1,6 +1,12 @@
 # Lazy Labeler
-![img.png](img.png)
-Lazy Labeler is a Python-driven desktop application designed to simplify the task of manually labeling datasets for machine learning projects. It presents an interactive interface, enabling users to label data samples with pre-established classes conveniently and swiftly. Although it was primarily developed as a personal tool and may not be suited for handling an exceptionally large number of labels at the moment (even though it can display them, it negates the quick hotkey labeling feature), it still holds potential usefulness for others. Additionally, it served as a learning opportunity to become more proficient in PyQt6, even though there are superior alternatives available.
+![img_1.png](img_1.png)
+Lazy Labeler is a Python desktop application specifically designed to simplify manual data labeling tasks for machine learning projects. The tool was initially created for personal use, tailored to handle moderate-sized labeling tasks. However, it may also be useful for others who require a straightforward and effective data labeling tool.
+
+The interactive interface of Lazy Labeler allows for swift and efficient labeling of data using pre-established classes. The application does have limitations in handling large numbers of labels due to constraints on the hotkey labeling feature.
+
+While there are more comprehensive data labeling tools available, Lazy Labeler serves as a practical option for smaller, more manageable datasets. The development of Lazy Labeler has also provided valuable experience in working with PyQt6.
+
+Please feel free to use and adapt Lazy Labeler to suit your data labeling needs.
 
 To use the Lazy Labeler application, follow these steps:
 
@@ -91,3 +97,34 @@ This feature is especially useful when the number of classes is large and/or the
 
 5. As you navigate through samples and label them, the progress will be saved automatically every 10 minutes (autosave feature). Additionally, you can manually save your progress at any time.
 
+
+
+
+
+### Running Tests
+
+The Lazy Labeler application comes with a suite of unit tests to ensure the functionality of its core components. The tests are written using the `pytest` framework.
+
+To run the tests, follow these steps:
+
+1. Ensure you have activated your virtual environment and installed all dependencies as described in the Installation section.
+
+2. Install the `pytest` and `pytest-qt` packages if you haven't already. `pytest` is the testing framework we use, while `pytest-qt` is a `pytest` plugin that provides fixtures to simplify the testing of PyQt6 applications.
+
+```bash
+pip install pytest pytest-qt
+```
+
+3. Navigate to the root directory of the project (where the `tests` directory is located).
+
+4. Run the tests using the `pytest` command:
+
+```bash
+pytest tests/
+```
+
+`pytest` will automatically discover and run all test files in the `tests/` directory.
+
+Note: If you have a different directory structure, replace `tests/` with the path to the directory that contains your test files.
+
+If the tests are successful, you should see an output indicating the number of tests passed. If any tests fail, `pytest` will provide a detailed error report to help you diagnose and fix the issue.

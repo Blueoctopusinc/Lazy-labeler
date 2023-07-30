@@ -253,13 +253,11 @@ class LabelingProjectWindow(QMainWindow):
         layout.addLayout(self._create_class_buttons())
 
         # Setup for 'Next' button
-        layout.addWidget(QLabel("Next Button"))
         next_btn = QPushButton('Next - Space')
         next_btn.clicked.connect(self.on_next_button_clicked)
         layout.addWidget(next_btn)
 
         # Setup for 'Save' button
-        layout.addWidget(QLabel("Save Button"))
         save_btn = QPushButton('Save')
         save_btn.clicked.connect(self.on_save_button_clicked)
         layout.addWidget(save_btn)
@@ -298,7 +296,18 @@ class LabelingProjectWindow(QMainWindow):
         """
         Handler for class button click event. It updates the selected classes and changes the appearance of the clicked button.
         """
+        # Identify the button that was just clicked
+        clicked_button = self.sender()
+
+        if self.project_data.single_class:
+            # If single_class is True, deselect other buttons
+            for btn in self.class_buttons:
+                if btn is not clicked_button:
+                    btn.setChecked(False)
+        # Update selected classes
         self.selected_classes = [i for i, btn in enumerate(self.class_buttons) if btn.isChecked()]
+
+        # Update button styles based on their selection status
         for i, btn in enumerate(self.class_buttons):
             if btn.isChecked():
                 btn.setStyleSheet(f"background-color: black; color: {self.colors[i]}; font-weight: bold")

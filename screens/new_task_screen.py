@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtWidgets import QListWidgetItem, QFileDialog, QRadioButton, QPushButton, QListWidget, QLabel, QCheckBox, \
     QLineEdit, QVBoxLayout, QDialog, QMessageBox, QButtonGroup
 import pandas as pd
@@ -26,84 +26,96 @@ class LoadFileThread(QThread):
                 data = json.load(f)
         self.data_signal.emit(data)
 
-
 class SaveTaskThread(QThread):
-    task_saved_signal = pyqtSignal()
+    """
+    This class is responsible for saving a new task to the database.
+
+    The `task` dictionary should contain the following keys:
+        - 'task_name': The name of the task.
+        - 'file_path': The path to the original CSV file.
+        - 'labels': A list of labels.
+        - 'label_column_name': The name of the column in the CSV file where the labels should be stored.
+        - 'synonyms_file_path': The path to the synonyms JSON file.
+        - 'single_class': A boolean indicating whether each row can only belong to one class.
+        - 'selected_field': The name of the field that is to be labeled.
+        - 'task_directory': The path to the directory where task data will be saved.
+        - 'task_uuid': A unique identifier for the task.
+    """
+    task_saved_signal = pyqtSignal(str)
     error_signal = pyqtSignal(str)
 
-    def __init__(self, Session, task_directory, file_path, new_file_path, synonyms_file_path, task_uuid, task,
-                 selected_field, label_column_name):
+    def __init__(self, Session, task):
         QThread.__init__(self)
         self.Session = Session
-        self.task_directory = task_directory
-        self.file_path = file_path
-        self.new_file_path = new_file_path
-        self.synonyms_file_path = synonyms_file_path
-        self.task_uuid = task_uuid
         self.task = task
-        self.selected_field = selected_field
-        self.label_column_name = label_column_name
+        self.task_directory = os.path.join(self.task['task_directory'], self.task['task_uuid'])
 
     def run(self):
         print("Running SaveTaskThread...")
-        os.makedirs(self.task_directory, exist_ok=True)
-        print(f"Created task directory: {self.task_directory}")
-
+        self.create_directory(self.task_directory)
         session = None
         try:
-            # Load the CSV file into a pandas DataFrame
-            df = pd.read_csv(self.file_path)
+            df = self.load_csv_into_dataframe(self.task['file_path'], self.task['selected_field'], self.task['label_column_name'])
+            self.save_dataframe_to_csv(df, os.path.join(self.task_directory, 'data.csv'))
 
-            # Keep only the selected column
-            df = df[[self.selected_field]]
+            if self.task['synonyms_file_path'] is not None:
+                self.copy_synonyms_file_to_task_directory(self.task['synonyms_file_path'])
 
-            # Add a new column for the labels, initially set to None
-            df[self.label_column_name] = None
-
-            # Save the DataFrame to a new CSV file in the task's directory
-            df.to_csv(self.new_file_path, index=False)
-
-            # Copy synonyms file to the task directory
-            shutil.copyfile(self.synonyms_file_path, os.path.join(self.task_directory, 'synonyms.json'))
-            print(f"Copied synonyms file to: {os.path.join(self.task_directory, 'synonyms.json')}")
-
-            # Create new Task object
-            new_task = Task(
-                task_name=self.task['task_name'],
-                file_path=self.new_file_path,
-                labels=",".join(self.task['labels']),
-                label_column_name=self.task['label_column_name'],
-                synonyms_file_path=os.path.join(self.task_directory, 'synonyms.json'),
-                single_class=self.task['single_class'],
-                field_to_label=self.task['field_to_label'],
-                task_uuid=self.task_uuid
-            )
-
-            # Open new session
-            session = self.Session()
-            session.add(new_task)
-            session.commit()
-            print("Saved task to database")
-
-            self.task_saved_signal.emit()
+            new_task = self.create_new_task()
+            self.save_task_to_database(new_task, session)
+            self.task_saved_signal.emit(self.task['task_uuid'])
             print("Finished running SaveTaskThread.")
-
         except Exception as e:
-            # Remove task directory if saving task fails
-            if os.path.exists(self.task_directory):
-                shutil.rmtree(self.task_directory)
-
-            # Rollback if session is defined
-            if session is not None:
-                session.rollback()
-            print("Failed to save task to database")
-            print(e)
-            self.error_signal.emit(str(e))  # emit error signal with the exception message
-
+            self.handle_exception(e, session)
         finally:
             if session is not None:
-                session.close()  # Close the session
+                session.close()
 
+    def create_directory(self, directory):
+        os.makedirs(directory, exist_ok=True)
+        print(f"Created task directory: {directory}")
+
+    def load_csv_into_dataframe(self, file_path, selected_field, label_column_name):
+        df = pd.read_csv(file_path)
+        df = df[[selected_field]]
+        df[label_column_name] = None
+        return df
+
+    def save_dataframe_to_csv(self, df, file_path):
+        df.to_csv(file_path, index=False)
+
+    def copy_synonyms_file_to_task_directory(self, synonyms_file_path):
+        new_synonyms_file_path = os.path.join(self.task_directory, 'synonyms.json')
+        shutil.copyfile(synonyms_file_path, new_synonyms_file_path)
+        print(f"Copied synonyms file to: {new_synonyms_file_path}")
+
+    def create_new_task(self):
+        new_task = Task(
+            task_name=self.task['task_name'],
+            file_path=os.path.join(self.task_directory, 'data.csv'),
+            labels=",".join(self.task['labels']),
+            label_column_name=self.task['label_column_name'],
+            synonyms_file_path=os.path.join(self.task_directory, 'synonyms.json'),
+            single_class=self.task['single_class'],
+            field_to_label=self.task['selected_field'],
+            task_uuid=self.task['task_uuid']
+        )
+        return new_task
+
+    def save_task_to_database(self, new_task, session):
+        session = self.Session()
+        session.add(new_task)
+        session.commit()
+        print("Saved task to database")
+
+    def handle_exception(self, e, session):
+        if os.path.exists(self.task_directory):
+            shutil.rmtree(self.task_directory)
+        if session is not None:
+            session.rollback()
+        print("Failed to save task to database")
+        print(e)
+        self.error_signal.emit(str(e))  # emit error signal with the exception message
 
 class NewTaskDialog(QDialog):
     task_saved = pyqtSignal()
@@ -141,9 +153,9 @@ class NewTaskDialog(QDialog):
         self.labels_edit = QLineEdit()
         layout.addWidget(self.labels_edit)
 
-        add_label_btn = QPushButton('+')
-        add_label_btn.clicked.connect(self.on_add_label_button_clicked)
-        layout.addWidget(add_label_btn)
+        self.add_label_btn = QPushButton('+')
+        self.add_label_btn.clicked.connect(self.on_add_label_button_clicked)
+        layout.addWidget(self.add_label_btn)
 
         self.labels_list_widget = QListWidget()
         layout.addWidget(self.labels_list_widget)
@@ -159,11 +171,19 @@ class NewTaskDialog(QDialog):
         self.field_to_label_list_widget = QListWidget()
         layout.addWidget(self.field_to_label_list_widget)
 
-        save_btn = QPushButton('Save')
-        save_btn.clicked.connect(self.on_save_button_clicked)
-        layout.addWidget(save_btn)
+        self.save_btn = QPushButton('Save')
+        self.save_btn.clicked.connect(self.on_save_button_clicked)
+        layout.addWidget(self.save_btn)
 
         self.setLayout(layout)
+
+    def show_message(self, title, message):
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setWindowTitle(title)
+        msg.setText(message)
+        QTimer.singleShot(3000, msg.close)  # close message box after 3 seconds
+        msg.exec()
 
     def on_add_label_button_clicked(self):
         # Get the current label from the line edit
@@ -207,21 +227,29 @@ class NewTaskDialog(QDialog):
             self.labels_list_widget.addItem(label)
 
     def on_save_button_clicked(self):
-        task_name = self.task_name_edit.text()
-        file_path = self.file_path_edit.text()
-
+        task_name = self.task_name_edit.text().strip()  # Added strip to remove leading/trailing whitespaces
+        file_path = self.file_path_edit.text().strip()  # Added strip to remove leading/trailing whitespaces
         labels = [self.labels_list_widget.item(i).text() for i in range(self.labels_list_widget.count())]
-
-        label_column_name = self.label_column_name_edit.text()
-        synonyms_file_path = self.synonyms_file_path_edit.text()
-
+        label_column_name = self.label_column_name_edit.text().strip()  # Added strip to remove leading/trailing whitespaces
+        synonyms_file_path = self.synonyms_file_path_edit.text().strip()  # Added strip to remove leading/trailing whitespaces
         single_class = True if not self.single_class_checkbox.isChecked() else False
 
+        # Check if all required fields have been filled
+        if not task_name:
+            self.show_message("No Task Name", "Please provide a task name before saving.")
+            return
+        if not labels:
+            self.show_message("No Labels", "Please add at least one label before saving.")
+            return
+        if not label_column_name:
+            self.show_message("No Label Column Name", "Please provide a label column name before saving.")
+            return
+
         selected_field_button = self.field_to_label_group.checkedButton()
+
         # Check if a field has been selected
         if not selected_field_button:
-            # If no field has been selected, show a warning dialog and return
-            QMessageBox.warning(self, "No field selected", "Please select a field before saving.")
+            self.show_message("No Field Selected", "Please select a field before saving.")
             return
 
         selected_field = selected_field_button.text()
@@ -240,24 +268,22 @@ class NewTaskDialog(QDialog):
 
         task = {
             'task_name': task_name,
-            'file_path': new_file_path,
+            'file_path': file_path,
             'labels': labels,
             'label_column_name': label_column_name,
-            'synonyms_file_path': new_synonyms_file_path,
+            'synonyms_file_path': synonyms_file_path,
             'single_class': single_class,
-            'field_to_label': selected_field,
+            'selected_field': selected_field,
             'task_directory': task_directory,
             'task_uuid': task_uuid
         }
 
-        self.save_task_thread = SaveTaskThread(self.Session, task_directory, file_path, new_file_path,
-                                               synonyms_file_path,
-                                               task_uuid, task, selected_field, label_column_name)
+        self.save_task_thread = SaveTaskThread(self.Session, task)
         self.save_task_thread.error_signal.connect(self.on_task_save_error)
         self.save_task_thread.task_saved_signal.connect(self.on_task_saved)
         self.save_task_thread.start()
 
-    def on_task_saved(self):
+    def on_task_saved(self, task):
         self.task_saved.emit()
         self.close()
 

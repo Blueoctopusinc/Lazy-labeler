@@ -4,6 +4,7 @@ from sqlalchemy.orm import validates, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+import os
 
 class Task(Base):
     __tablename__ = 'tasks'
@@ -31,10 +32,16 @@ class Task(Base):
         }
         if not value:
             raise ValueError(error_messages.get(key, f"{key} should not be empty"))
+        else:
+            if key in ['file_path', 'synonyms_file_path']:
+                if value and not os.path.exists(value):
+                    raise ValueError(f"The file at path {value} does not exist.")
         return value
 
     def get_labels_list(self):
         return self.labels.split(',')
 
-    def get_single_class_bool(self):
-        return self.single_class.lower() == 'true'
+
+
+
+
