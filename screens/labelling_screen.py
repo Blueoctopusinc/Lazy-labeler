@@ -103,7 +103,9 @@ class DatabaseUpdateThread(QThread):
         """
 
         # Update the number of labelled samples in the project data
-        self.project_data.labelled_samples = self.current_index
+        # implicit conversion to int otherwise it gets stored and returned as bytes
+        # believe it is something to do with how a pandas dataframe index works
+        self.project_data.labelled_samples = int(self.current_index)
 
         # Add the updated project data to the session and commit the changes
         self.session.add(self.project_data)
