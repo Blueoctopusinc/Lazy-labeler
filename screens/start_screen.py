@@ -1,6 +1,7 @@
 import os
 import shutil
 from models import Task
+from .export_screen import ExportWindow
 from .labelling_screen import LabelingProjectWindow
 from .new_task_screen import NewTaskDialog
 from PyQt6.QtWidgets import (QTableWidget, QTableWidgetItem, QHeaderView, QMainWindow, QVBoxLayout, QPushButton,
@@ -15,8 +16,9 @@ class StartWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Initialize the table with 0 rows and 5 columns
-        self.task_table_widget = QTableWidget(0, 5)
-        self.task_table_widget.setHorizontalHeaderLabels(["Task Name", "Labelled", "Created", "Open", "Delete"])
+        self.task_table_widget = QTableWidget(0, 6)
+        self.task_table_widget.setHorizontalHeaderLabels(
+            ["Task Name", "Labelled", "Created", "Open", "Delete", "Export"])
         self.task_table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.task_table_widget.setSortingEnabled(True)
         self.task_table_widget.verticalHeader().setVisible(False)
@@ -53,7 +55,7 @@ class StartWindow(QMainWindow):
             created_at = task.created_at.strftime("%Y-%m-%d %H:%M")
             self.task_table_widget.setCellWidget(row_position, 2, QLabel(created_at))
 
-            # Add 'Open' and 'Delete' buttons for each task
+            # Add 'Open', 'Delete' and 'Export' buttons for each task
             open_button = QPushButton("Open")
             open_button.clicked.connect(lambda checked, task=task: self.on_open_button_clicked(task))
             self.task_table_widget.setCellWidget(row_position, 3, open_button)
@@ -61,6 +63,10 @@ class StartWindow(QMainWindow):
             delete_button = QPushButton("Delete")
             delete_button.clicked.connect(lambda checked, task=task: self.on_delete_button_clicked(task))
             self.task_table_widget.setCellWidget(row_position, 4, delete_button)
+
+            export_button = QPushButton("Export")
+            export_button.clicked.connect(lambda checked, task=task: self.on_export_button_clicked(task))
+            self.task_table_widget.setCellWidget(row_position, 5, export_button)
 
         session.close()
 
@@ -107,3 +113,8 @@ class StartWindow(QMainWindow):
         """Open the labeling window for the clicked task."""
         self.label_window = LabelingProjectWindow(self.Session, task.task_uuid)
         self.label_window.show()
+
+    def on_export_button_clicked(self, task):
+        """Open the export window for the clicked task."""
+        self.export_window = ExportWindow(self.Session, task.task_uuid)
+        self.export_window.show()

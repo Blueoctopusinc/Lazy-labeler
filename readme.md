@@ -9,7 +9,6 @@ While there are more comprehensive data labeling tools available, Lazy Labeler s
 Please feel free to use and adapt Lazy Labeler to suit your data labeling needs.
 
 To use the Lazy Labeler application, follow these steps:
-
 ### Installation
 
 1. Clone the repository from GitHub:
@@ -44,6 +43,20 @@ source venv/bin/activate
 ```
 pip install -r requirements.txt
 ```
+## Lazy Labeler Features
+
+Lazy Labeler is a straightforward tool that helps with data labeling. Here's what you get:
+
+1. **User-Friendly Interface**: Easy navigation and labeling through an interactive interface.
+2. **Hotkey Labeling**: Quick label assignment with simple keyboard shortcuts.
+3. **Synonyms Support**: Use a JSON file to define class synonyms. Get label suggestions based on text similarity.
+4. **TF-IDF Assistance**: Get label recommendations based on text similarity measurements.
+5. **Auto and Manual Save**: Progress is saved automatically every 10 minutes. Plus, you can manually save anytime.
+6. **Testing Suite**: In-built test suite to ensure the tool works correctly.
+7. **CSV Data Compatibility**: The tool works with CSV formatted data.
+8. **SQLite Database**: SQLite with SQLAlchemy manages task storage and manipulation.
+9. **Smooth Operation with Threading**: QThreads handle heavy operations to ensure smooth usage.
+10. **Flexible for Customization**: Feel free to tweak Lazy Labeler as per your labeling needs.
 
 ### JSON Format for Synonyms
 
@@ -63,7 +76,7 @@ In my example one class could be comprised of multiple subcategories, so I used 
 Each class should have an associated list of synonyms. The synonyms will be used during the labeling process to suggest labels to the user based on the TF-IDF similarity between the sample and the class synonyms.
 
 
-## Technologies Used
+## Technologies Stack
 
 The Lazy Labeler application is built using the following technologies:
 

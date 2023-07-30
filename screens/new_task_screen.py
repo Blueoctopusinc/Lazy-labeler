@@ -7,6 +7,7 @@ import os
 import shutil
 import uuid
 import traceback
+import qtawesome as qta
 
 from models import Task
 
@@ -48,7 +49,7 @@ class SaveTaskThread(QThread):
         QThread.__init__(self)
         self.Session = Session
         self.task = task
-        self.task_directory = os.path.join(self.task['task_directory'], self.task['task_uuid'])
+        self.task_directory = self.task['task_directory']
 
     def run(self):
         print("Running SaveTaskThread...")
@@ -278,10 +279,15 @@ class NewTaskDialog(QDialog):
             'task_uuid': task_uuid
         }
 
+        self.save_btn.setIcon(qta.icon('fa5s.spinner', animation=qta.Spin(self.save_btn)))
         self.save_task_thread = SaveTaskThread(self.Session, task)
+        self.save_task_thread.finished.connect(self.on_task_thread_finished)
         self.save_task_thread.error_signal.connect(self.on_task_save_error)
         self.save_task_thread.task_saved_signal.connect(self.on_task_saved)
         self.save_task_thread.start()
+
+    def on_task_thread_finished(self):
+        self.save_btn.setIcon(qta.icon('fa5s.check', color='green'))
 
     def on_task_saved(self, task):
         self.task_saved.emit()
